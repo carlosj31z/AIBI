@@ -3,156 +3,240 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>AIBI - Mascota Robot con +100 expresiones</title>
+    <title>AIBI - Mascota Robot +100 expresiones</title>
     <style>
         :root {
-            --theme: #00f3ff;
-            --bg: #0a0a14;
-            --panel: #12122a;
-            --border: #2a2a44;
-            --glow: 0 0 20px;
+            --theme-color: #00f3ff;
+            --bg-dark: #080810;
+            --panel-bg: #111122;
+            --eye-bg: #ffffff;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
         body {
-            background: radial-gradient(circle at 50% 30%, #1a1a3a, #050510);
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-dark);
+            color: #ffffff;
             margin: 0;
-            transition: background 0.5s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            transition: background 0.8s ease;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
         }
+        body.theme-happy { --theme-color: #39ff14; }
+        body.theme-sad { --theme-color: #0066ff; }
+        body.theme-thinking { --theme-color: #bd00ff; }
+        body.theme-love { --theme-color: #ff4d7a; }
+        body.theme-surprised { --theme-color: #ffaa00; }
+        body.theme-playful { --theme-color: #ff66cc; }
+        body.theme-sleepy { --theme-color: #aaaacc; }
+        body.theme-excited { --theme-color: #ffd700; }
+        body.theme-grateful { --theme-color: #88ff88; }
+        body.theme-shy { --theme-color: #ffb6c1; }
+        body.theme-angry { --theme-color: #ff3333; }
+        body.theme-silly { --theme-color: #ff9900; }
 
-        /* CAJA CONTENEDORA ESTILO AIBI */
-        .aibi-box {
-            width: 92vw;
-            max-width: 400px;
-            background: linear-gradient(160deg, #1e1e32, #0b0b18);
-            border: 3px solid #3e3e5c;
-            border-radius: 48px;
-            padding: 20px 15px 25px;
-            box-shadow:
-                0 0 40px rgba(0, 243, 255, 0.25),
-                inset 0 0 30px rgba(0, 0, 0, 0.6),
-                0 20px 40px rgba(0,0,0,0.8);
+        .api-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid #222244;
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 15px;
+            width: 90%;
+            max-width: 380px;
+            text-align: center;
+            display: none; /* Oculto, la API KEY ya está pegada */
+        }
+        .api-panel input {
+            background: #05050a;
+            border: 1px solid #333366;
+            color: #00f3ff;
+            padding: 8px;
+            border-radius: 8px;
+            width: 90%;
+            text-align: center;
+            font-size: 11px;
+        }
+        .robot-chassis {
+            position: relative;
+            background: linear-gradient(145deg, #1d1d2e, #0c0c14);
+            border: 4px solid #2d2d44;
+            border-radius: 40px;
+            padding: 25px;
+            width: 90%;
+            max-width: 380px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            position: relative;
-            transition: all 0.4s;
+            box-shadow: 0 0 40px rgba(0,243,255,0.2), inset 0 0 30px rgba(0,0,0,0.6);
         }
-        .aibi-box::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            right: 20px;
-            height: 6px;
-            background: rgba(255,255,255,0.08);
-            border-radius: 10px;
-        }
-
-        /* PANTALLA PRINCIPAL */
-        .face-screen {
+        .screen {
+            background-color: #020205;
+            border: 3px solid #1c1c30;
+            border-radius: 25px;
             width: 100%;
-            aspect-ratio: 1 / 0.9;
-            background: #03030a;
-            border-radius: 32px;
-            border: 2px solid #2a2a42;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+            height: 210px;
             display: flex;
             justify-content: center;
             align-items: center;
+            gap: 20px;
+            padding: 15px 0;
             position: relative;
             overflow: hidden;
         }
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
+        .eye-container {
+            display: flex;
+            gap: 25px;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
         }
-
-        /* CHAT */
-        .chat-area {
+        .eye {
+            width: 52px;
+            height: 72px;
+            background-color: var(--eye-bg);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--theme-color), inset 0 0 10px rgba(0,0,0,0.3);
+            position: relative;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .iris {
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle at 30% 30%, var(--theme-color), #000033);
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pupil {
+            width: 14px;
+            height: 14px;
+            background: #000;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .highlight {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 6px;
+            left: 8px;
+        }
+        .eyebrow {
+            position: absolute;
+            width: 54px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 4px;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.2s;
+        }
+        /* Partículas (corazones, lágrimas) */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+            font-size: 18px;
+            animation: floatUp 1.5s forwards;
+            opacity: 0.9;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-60px) scale(0.5); }
+        }
+        .tear {
+            position: absolute;
+            width: 4px;
+            height: 8px;
+            background: #aaddff;
+            border-radius: 0 0 50% 50%;
+            animation: fallDown 1.2s forwards;
+        }
+        @keyframes fallDown {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(30px); }
+        }
+        .chat-container {
+            background-color: rgba(0,0,0,0.4);
+            border-radius: 15px;
             width: 100%;
-            background: rgba(0,0,0,0.5);
-            border-radius: 20px;
-            margin-top: 14px;
-            padding: 12px;
-            height: 100px;
+            height: 110px;
+            margin-top: 15px;
+            padding: 10px;
             overflow-y: auto;
-            border: 1px solid #2f2f4a;
-            font-size: 12px;
-            color: #ccc;
+            font-size: 11px;
+            border: 1px solid #1a1a2e;
             display: flex;
             flex-direction: column;
             gap: 4px;
-            backdrop-filter: blur(5px);
         }
         .chat-msg {
-            animation: fadeInUp 0.3s;
-            padding: 4px 8px;
-            border-radius: 10px;
-            background: rgba(255,255,255,0.05);
+            animation: fadeIn 0.3s;
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(8px); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        /* CONTROLES */
-        .controls {
+        .input-group {
             display: flex;
             width: 100%;
-            gap: 10px;
-            margin-top: 14px;
+            gap: 8px;
+            margin-top: 15px;
             align-items: center;
         }
-        .text-input {
+        .input-group input {
             flex: 1;
-            background: #0c0c1a;
-            border: 1px solid #3e3e5c;
-            border-radius: 30px;
-            padding: 12px 18px;
+            background: #05050a;
+            border: 1px solid #2d2d44;
             color: white;
-            font-size: 14px;
+            padding: 10px;
+            border-radius: 20px;
+            font-size: 13px;
             outline: none;
-            transition: 0.3s;
+            transition: border 0.3s;
         }
-        .text-input:focus {
-            border-color: var(--theme);
-            box-shadow: 0 0 15px var(--theme);
+        .input-group input:focus {
+            border-color: var(--theme-color);
         }
-        .btn {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: #1a1a30;
-            border: 1px solid #4a4a6a;
+        .btn-action {
+            background-color: var(--panel-bg);
+            border: 1px solid #2d2d44;
             color: white;
-            font-size: 20px;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.2s;
-            backdrop-filter: blur(10px);
+            font-size: 18px;
+            transition: all 0.2s;
+            flex-shrink: 0;
         }
-        .btn:active {
+        .btn-action:active {
             transform: scale(0.9);
             background: #2a2a50;
-            border-color: var(--theme);
         }
-        .btn.mic {
+        .btn-mic {
             background: #ff4080;
             border-color: #ff80b0;
         }
-        .btn.mic.listening {
+        .btn-mic.listening {
             animation: pulse 0.8s infinite;
             background: #ff1744;
             box-shadow: 0 0 30px red;
@@ -161,15 +245,12 @@
             0%,100% { transform: scale(1); }
             50% { transform: scale(1.15); }
         }
-
-        /* INDICADOR DE VOZ HABLANDO */
         .speaking-indicator {
             display: none;
-            width: 100%;
-            text-align: center;
-            margin-top: 5px;
             font-size: 11px;
             color: #aaa;
+            margin-top: 4px;
+            text-align: center;
         }
         .speaking-indicator.active {
             display: block;
@@ -179,401 +260,279 @@
             0%,100% { opacity: 0.3; }
             50% { opacity: 1; }
         }
-
-        /* API KEY OCULTA (ya viene pegada) */
-        .api-hidden {
-            display: none;
-        }
-
-        /* Responsive */
-        @media (max-width: 420px) {
-            .aibi-box {
-                border-radius: 36px;
-                padding: 15px 12px 20px;
-            }
-            .btn {
-                width: 42px;
-                height: 42px;
-                font-size: 18px;
-            }
-            .text-input {
-                padding: 10px 14px;
-                font-size: 13px;
-            }
-        }
     </style>
 </head>
 <body>
-    <div class="aibi-box" id="aibiBox">
-        <div class="face-screen">
-            <canvas id="faceCanvas" width="360" height="320"></canvas>
-        </div>
-        <div class="chat-area" id="chatBox"></div>
-        <div class="controls">
-            <input type="text" class="text-input" id="textInput" placeholder="Escribe o toca el micrófono..." autocomplete="off">
-            <button class="btn" id="sendBtn" title="Enviar">➤</button>
-            <button class="btn mic" id="micBtn" title="Hablar">🎤</button>
-        </div>
-        <div class="speaking-indicator" id="speakingIndicator">AIBI está hablando...</div>
+    <!-- Panel de API oculto (ya contiene la key pegada) -->
+    <div class="api-panel" style="display:none;">
+        <strong>⚙️ CREDENCIAL DE INTELIGENCIA</strong><br>
+        <input type="password" id="api-key" value="AQ.Ab8RN6IcrejmNXE9otvzXI-qbv8UWDO4v1CBrJHvUy41C29NYg">
     </div>
 
-    <!-- API KEY preconfigurada -->
-    <input type="hidden" id="apiKey" value="AQ.Ab8RN6IcrejmNXE9otvzXI-qbv8UWDO4v1CBrJHvUy41C29NYg">
+    <div class="robot-chassis" id="robot-chassis">
+        <div class="screen" id="screen">
+            <div class="eye-container">
+                <!-- Ojo izquierdo -->
+                <div class="eye" id="eye-left">
+                    <div class="eyebrow" id="eyebrow-left"></div>
+                    <div class="iris" id="iris-left">
+                        <div class="pupil"></div>
+                        <div class="highlight"></div>
+                    </div>
+                </div>
+                <!-- Ojo derecho -->
+                <div class="eye" id="eye-right">
+                    <div class="eyebrow" id="eyebrow-right"></div>
+                    <div class="iris" id="iris-right">
+                        <div class="pupil"></div>
+                        <div class="highlight"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-container" id="chat-box"></div>
+        <div class="input-group">
+            <input type="text" id="text-input" placeholder="Escribe algo..." onkeypress="if(event.key==='Enter') sendPrompt()">
+            <button class="btn-action" id="send-btn" onclick="sendPrompt()">➤</button>
+            <button class="btn-action btn-mic" id="mic-btn" title="Hablar">🎤</button>
+        </div>
+        <div class="speaking-indicator" id="speaking-indicator">AIBI está hablando...</div>
+    </div>
 
     <script>
         (function() {
-            // ============ CONFIGURACIÓN ============
-            const API_KEY = document.getElementById('apiKey').value;
-            const MODEL = 'gemini-1.5-flash'; // Modelo rápido y bueno
+            // API Key ya puesta
+            const API_KEY = "AQ.Ab8RN6IcrejmNXE9otvzXI-qbv8UWDO4v1CBrJHvUy41C29NYg";
+            const MODEL = "gemini-1.5-flash";
             const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-            // Elementos DOM
-            const canvas = document.getElementById('faceCanvas');
-            const ctx = canvas.getContext('2d');
-            const chatBox = document.getElementById('chatBox');
-            const textInput = document.getElementById('textInput');
-            const sendBtn = document.getElementById('sendBtn');
-            const micBtn = document.getElementById('micBtn');
-            const speakingIndicator = document.getElementById('speakingIndicator');
-            const aibiBox = document.getElementById('aibiBox');
+            // Elementos
+            const eyeLeft = document.getElementById('eye-left');
+            const eyeRight = document.getElementById('eye-right');
+            const irisLeft = document.getElementById('iris-left');
+            const irisRight = document.getElementById('iris-right');
+            const eyebrowLeft = document.getElementById('eyebrow-left');
+            const eyebrowRight = document.getElementById('eyebrow-right');
+            const screen = document.getElementById('screen');
+            const chatBox = document.getElementById('chat-box');
+            const textInput = document.getElementById('text-input');
+            const micBtn = document.getElementById('mic-btn');
+            const speakingIndicator = document.getElementById('speaking-indicator');
 
-            // ============ ESTADO DE EMOCIÓN Y EXPRESIONES ============
+            // Estado de emoción actual
             let currentEmotion = 'neutral';
-            let expressionParams = {
-                eyeScaleY: 1,
-                eyeScaleX: 1,
-                irisRadius: 18,
-                pupilRadius: 7,
-                irisOffsetX: 0,
-                irisOffsetY: 0,
-                eyebrowAngle: 0,
-                eyebrowSpacing: 20,
-                mouthType: 'neutral', // neutral, smile, frown, open, heart
-                blushAlpha: 0,
-                tearAlpha: 0,
-                sparkleCount: 0,
-                heartParticles: [],
-                colorShift: 0,
-                extraElements: []
-            };
 
-            // Más de 100 combinaciones posibles: mapeo de emociones a sets de parámetros base
+            // Mapeo de emociones a configuraciones de ojos/cejas (base)
             const emotionPresets = {
-                neutral: { eyeScaleY: 1, eyeScaleX: 1, irisRadius: 18, eyebrowAngle: 0, mouth: 'neutral', blush: 0, sparkle: 0 },
-                happy: { eyeScaleY: 0.7, eyeScaleX: 1.1, irisRadius: 16, eyebrowAngle: -15, mouth: 'smile', blush: 0.5, sparkle: 4 },
-                sad: { eyeScaleY: 1.3, eyeScaleX: 0.9, irisRadius: 20, eyebrowAngle: 15, mouth: 'frown', blush: 0, tear: 0.7, sparkle: 0 },
-                love: { eyeScaleY: 0.6, eyeScaleX: 0.9, irisRadius: 14, eyebrowAngle: -20, mouth: 'heart', blush: 0.8, sparkle: 6, heartParticles: true },
-                surprised: { eyeScaleY: 1.4, eyeScaleX: 1.3, irisRadius: 10, eyebrowAngle: -25, mouth: 'open', blush: 0, sparkle: 2 },
-                playful: { eyeScaleY: 0.8, eyeScaleX: 1.0, irisRadius: 17, eyebrowAngle: -10, mouth: 'smile', blush: 0.3, sparkle: 3 },
-                sleepy: { eyeScaleY: 0.3, eyeScaleX: 1.2, irisRadius: 20, eyebrowAngle: 5, mouth: 'neutral', blush: 0, sparkle: 0 },
-                thinking: { eyeScaleY: 0.9, eyeScaleX: 0.8, irisRadius: 15, eyebrowAngle: 10, mouth: 'neutral', blush: 0, sparkle: 1 },
-                excited: { eyeScaleY: 0.5, eyeScaleX: 1.2, irisRadius: 10, eyebrowAngle: -30, mouth: 'open', blush: 0.6, sparkle: 8 },
-                grateful: { eyeScaleY: 0.7, eyeScaleX: 1.0, irisRadius: 16, eyebrowAngle: -12, mouth: 'smile', blush: 0.4, sparkle: 5 },
-                shy: { eyeScaleY: 0.9, eyeScaleX: 0.8, irisRadius: 17, eyebrowAngle: 5, mouth: 'smile', blush: 0.7, sparkle: 2 },
-                angry: { eyeScaleY: 0.6, eyeScaleX: 1.0, irisRadius: 12, eyebrowAngle: 20, mouth: 'frown', blush: 0.2, sparkle: 0 },
-                silly: { eyeScaleY: 0.4, eyeScaleX: 1.4, irisRadius: 22, eyebrowAngle: -5, mouth: 'open', blush: 0.3, sparkle: 7 }
+                neutral: {
+                    eyeScaleX: 1, eyeScaleY: 1, irisSize: 32, irisOffsetX: 0, irisOffsetY: 0,
+                    eyebrowAngle: 0, eyebrowY: -12, mouth: '', blush: 0, tear: 0, sparkle: 0, heart: false
+                },
+                happy: {
+                    eyeScaleX: 1.1, eyeScaleY: 0.7, irisSize: 28, irisOffsetX: 0, irisOffsetY: -2,
+                    eyebrowAngle: -15, eyebrowY: -14, blush: 0.6, tear: 0, sparkle: 4, heart: false
+                },
+                sad: {
+                    eyeScaleX: 0.9, eyeScaleY: 1.3, irisSize: 34, irisOffsetX: 0, irisOffsetY: 4,
+                    eyebrowAngle: 15, eyebrowY: -8, blush: 0, tear: 0.8, sparkle: 0, heart: false
+                },
+                love: {
+                    eyeScaleX: 0.9, eyeScaleY: 0.6, irisSize: 26, irisOffsetX: 0, irisOffsetY: -3,
+                    eyebrowAngle: -20, eyebrowY: -15, blush: 0.8, tear: 0, sparkle: 6, heart: true
+                },
+                surprised: {
+                    eyeScaleX: 1.3, eyeScaleY: 1.4, irisSize: 22, irisOffsetX: 0, irisOffsetY: -2,
+                    eyebrowAngle: -25, eyebrowY: -18, blush: 0, tear: 0, sparkle: 2, heart: false
+                },
+                playful: {
+                    eyeScaleX: 1, eyeScaleY: 0.8, irisSize: 30, irisOffsetX: 0, irisOffsetY: -1,
+                    eyebrowAngle: -10, eyebrowY: -13, blush: 0.3, tear: 0, sparkle: 3, heart: false
+                },
+                sleepy: {
+                    eyeScaleX: 1.2, eyeScaleY: 0.3, irisSize: 34, irisOffsetX: 0, irisOffsetY: 5,
+                    eyebrowAngle: 5, eyebrowY: -10, blush: 0, tear: 0, sparkle: 0, heart: false
+                },
+                thinking: {
+                    eyeScaleX: 0.8, eyeScaleY: 0.9, irisSize: 28, irisOffsetX: 0, irisOffsetY: 0,
+                    eyebrowAngle: 10, eyebrowY: -10, blush: 0, tear: 0, sparkle: 1, heart: false
+                },
+                excited: {
+                    eyeScaleX: 1.2, eyeScaleY: 0.5, irisSize: 20, irisOffsetX: 0, irisOffsetY: -4,
+                    eyebrowAngle: -30, eyebrowY: -20, blush: 0.5, tear: 0, sparkle: 8, heart: false
+                },
+                grateful: {
+                    eyeScaleX: 1, eyeScaleY: 0.7, irisSize: 28, irisOffsetX: 0, irisOffsetY: -2,
+                    eyebrowAngle: -12, eyebrowY: -14, blush: 0.4, tear: 0, sparkle: 5, heart: false
+                },
+                shy: {
+                    eyeScaleX: 0.8, eyeScaleY: 0.9, irisSize: 30, irisOffsetX: 0, irisOffsetY: 0,
+                    eyebrowAngle: 5, eyebrowY: -11, blush: 0.7, tear: 0, sparkle: 2, heart: false
+                },
+                angry: {
+                    eyeScaleX: 1, eyeScaleY: 0.6, irisSize: 26, irisOffsetX: 0, irisOffsetY: -1,
+                    eyebrowAngle: 20, eyebrowY: -8, blush: 0.2, tear: 0, sparkle: 0, heart: false
+                },
+                silly: {
+                    eyeScaleX: 1.4, eyeScaleY: 0.4, irisSize: 36, irisOffsetX: 0, irisOffsetY: 0,
+                    eyebrowAngle: -5, eyebrowY: -12, blush: 0.3, tear: 0, sparkle: 7, heart: false
+                }
             };
 
-            // Conjunto de variaciones para superar 100 expresiones (combinaciones aleatorias controladas)
-            function generateExpressionVariant(emotion) {
+            // Función para generar variante aleatoria (más de 100 combinaciones)
+            function getExpressionVariant(emotion) {
                 const base = emotionPresets[emotion] || emotionPresets.neutral;
-                // Añadimos pequeñas variaciones aleatorias dentro de rangos para crear diversidad
-                const variant = {
-                    eyeScaleY: base.eyeScaleY * (0.9 + Math.random() * 0.2),
-                    eyeScaleX: base.eyeScaleX * (0.9 + Math.random() * 0.2),
-                    irisRadius: base.irisRadius * (0.85 + Math.random() * 0.3),
-                    pupilRadius: 5 + Math.random() * 4,
-                    irisOffsetX: (Math.random() - 0.5) * 8,
-                    irisOffsetY: (Math.random() - 0.5) * 6,
-                    eyebrowAngle: base.eyebrowAngle + (Math.random() - 0.5) * 10,
-                    eyebrowSpacing: 15 + Math.random() * 15,
-                    mouthType: base.mouth,
-                    blushAlpha: base.blush * (0.8 + Math.random() * 0.4),
-                    tearAlpha: base.tear || 0,
-                    sparkleCount: Math.floor(base.sparkle * (0.7 + Math.random() * 0.6)),
-                    colorShift: Math.random() * 20,
-                    heartParticles: base.heartParticles || false
+                const variation = 0.15; // 15% de variación aleatoria
+                return {
+                    eyeScaleX: base.eyeScaleX * (1 + (Math.random() - 0.5) * variation * 2),
+                    eyeScaleY: base.eyeScaleY * (1 + (Math.random() - 0.5) * variation * 2),
+                    irisSize: base.irisSize * (1 + (Math.random() - 0.5) * variation * 2),
+                    irisOffsetX: base.irisOffsetX + (Math.random() - 0.5) * 6,
+                    irisOffsetY: base.irisOffsetY + (Math.random() - 0.5) * 6,
+                    eyebrowAngle: base.eyebrowAngle + (Math.random() - 0.5) * 12,
+                    eyebrowY: base.eyebrowY + (Math.random() - 0.5) * 6,
+                    blush: Math.min(1, Math.max(0, base.blush + (Math.random() - 0.5) * 0.3)),
+                    tear: Math.min(1, Math.max(0, base.tear + (Math.random() - 0.5) * 0.3)),
+                    sparkle: Math.max(0, Math.floor(base.sparkle + (Math.random() - 0.5) * 4)),
+                    heart: base.heart
                 };
-                return variant;
             }
 
-            // Actualiza los parámetros de expresión actual con transición suave
-            let targetParams = { ...expressionParams };
-            function setEmotion(emotion) {
-                currentEmotion = emotion;
-                targetParams = generateExpressionVariant(emotion);
-                // Añadir partículas de corazones si es love
-                if (emotion === 'love') {
-                    for (let i = 0; i < 8; i++) {
-                        expressionParams.heartParticles.push({
-                            x: Math.random() * canvas.width,
-                            y: canvas.height + 20,
-                            size: 8 + Math.random() * 15,
-                            speed: 1 + Math.random() * 2,
-                            opacity: 0.8
-                        });
-                    }
-                }
-            }
-
-            // Interpolación para animación suave
-            function lerpParams(current, target, factor = 0.1) {
-                for (let key in target) {
-                    if (typeof target[key] === 'number' && typeof current[key] === 'number') {
-                        current[key] += (target[key] - current[key]) * factor;
-                    } else if (key === 'mouthType' || key === 'heartParticles') {
-                        current[key] = target[key];
-                    }
-                }
-                // Actualizar partículas corazón
-                if (!target.heartParticles) {
-                    current.heartParticles = current.heartParticles.filter(p => p.opacity > 0.01);
-                }
-            }
-
-            // ============ DIBUJADO DE CARA (Ojos expresivos AIBI) ============
-            function drawFace() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                const w = canvas.width;
-                const h = canvas.height;
-                const centerY = h * 0.45;
-
-                // Fondo sutil
-                const gradient = ctx.createRadialGradient(w/2, centerY, 20, w/2, centerY, w*0.8);
-                gradient.addColorStop(0, 'rgba(0,243,255,0.05)');
-                gradient.addColorStop(1, 'rgba(0,0,0,0)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, w, h);
-
-                // Parámetros actuales
-                const p = expressionParams;
-                const eyeSpacing = w * 0.3;
-                const leftEyeX = w/2 - eyeSpacing/2;
-                const rightEyeX = w/2 + eyeSpacing/2;
-                const eyeY = centerY;
-
-                // Dibujar ojos
-                drawEye(leftEyeX, eyeY, p, 'left');
-                drawEye(rightEyeX, eyeY, p, 'right');
+            // Aplicar expresión a los ojos
+            function applyExpression(params) {
+                // Ojo izquierdo
+                eyeLeft.style.transform = `scale(${params.eyeScaleX}, ${params.eyeScaleY})`;
+                eyeRight.style.transform = `scale(${params.eyeScaleX}, ${params.eyeScaleY})`;
+                
+                // Iris
+                irisLeft.style.width = irisLeft.style.height = `${params.irisSize}px`;
+                irisRight.style.width = irisRight.style.height = `${params.irisSize}px`;
+                irisLeft.style.transform = `translate(${params.irisOffsetX}px, ${params.irisOffsetY}px)`;
+                irisRight.style.transform = `translate(${params.irisOffsetX}px, ${params.irisOffsetY}px)`;
 
                 // Cejas
-                drawEyebrows(leftEyeX, eyeY, rightEyeX, eyeY, p);
+                eyebrowLeft.style.transform = `translateX(-50%) rotate(${params.eyebrowAngle}deg)`;
+                eyebrowRight.style.transform = `translateX(-50%) rotate(${-params.eyebrowAngle}deg)`;
+                eyebrowLeft.style.top = `${params.eyebrowY}px`;
+                eyebrowRight.style.top = `${params.eyebrowY}px`;
 
-                // Boca
-                drawMouth(w/2, eyeY + 65, p);
-
-                // Rubor
-                if (p.blushAlpha > 0.01) {
-                    drawBlush(leftEyeX - 25, eyeY + 20, p.blushAlpha);
-                    drawBlush(rightEyeX + 25, eyeY + 20, p.blushAlpha);
+                // Rubor (añadimos divs de rubor dinámicos)
+                document.querySelectorAll('.blush').forEach(el => el.remove());
+                if (params.blush > 0.2) {
+                    addBlush(eyeLeft, params.blush);
+                    addBlush(eyeRight, params.blush);
                 }
 
                 // Lágrimas
-                if (p.tearAlpha > 0.01) {
-                    drawTear(leftEyeX, eyeY + 30, p.tearAlpha);
-                    drawTear(rightEyeX, eyeY + 30, p.tearAlpha);
+                document.querySelectorAll('.tear').forEach(el => el.remove());
+                if (params.tear > 0.3) {
+                    addTear(eyeLeft);
+                    addTear(eyeRight);
                 }
 
-                // Destellos / chispas
-                if (p.sparkleCount > 0) {
-                    for (let i = 0; i < p.sparkleCount; i++) {
-                        drawSparkle(
-                            Math.random() * w * 0.6 + w*0.2,
-                            Math.random() * h * 0.4 + h*0.2,
-                            2 + Math.random() * 5
-                        );
+                // Corazones flotantes
+                if (params.heart) {
+                    for (let i = 0; i < 3; i++) {
+                        setTimeout(() => addParticle('❤️', screen), i * 200);
                     }
                 }
 
-                // Partículas de corazón flotando
-                p.heartParticles.forEach(part => {
-                    ctx.globalAlpha = part.opacity;
-                    drawHeart(part.x, part.y, part.size);
-                    part.y -= part.speed;
-                    part.opacity -= 0.005;
-                });
-                ctx.globalAlpha = 1;
-                p.heartParticles = p.heartParticles.filter(part => part.opacity > 0.01 && part.y > -20);
-            }
-
-            function drawEye(x, y, p, side) {
-                ctx.save();
-                ctx.translate(x, y);
-                // Escala
-                ctx.scale(p.eyeScaleX, p.eyeScaleY);
-                // Forma del ojo (óvalo)
-                const eyeWidth = 38;
-                const eyeHeight = 52;
-                ctx.beginPath();
-                ctx.ellipse(0, 0, eyeWidth, eyeHeight, 0, 0, Math.PI * 2);
-                ctx.fillStyle = '#ffffff';
-                ctx.fill();
-                ctx.strokeStyle = '#aaa';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Iris
-                const irisX = p.irisOffsetX * (side === 'left' ? 1 : 1);
-                const irisY = p.irisOffsetY;
-                ctx.beginPath();
-                ctx.arc(irisX, irisY, p.irisRadius, 0, Math.PI*2);
-                const irisGrad = ctx.createLinearGradient(irisX-10, irisY-10, irisX+10, irisY+10);
-                const hue = 195 + p.colorShift; // azul cian
-                irisGrad.addColorStop(0, `hsl(${hue}, 90%, 60%)`);
-                irisGrad.addColorStop(1, `hsl(${hue+15}, 90%, 40%)`);
-                ctx.fillStyle = irisGrad;
-                ctx.fill();
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 1.5;
-                ctx.stroke();
-
-                // Pupila
-                ctx.beginPath();
-                ctx.arc(irisX, irisY, p.pupilRadius, 0, Math.PI*2);
-                ctx.fillStyle = '#000';
-                ctx.fill();
-
-                // Brillo
-                ctx.beginPath();
-                ctx.arc(irisX-4, irisY-5, 3.5, 0, Math.PI*2);
-                ctx.fillStyle = '#fff';
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(irisX+5, irisY+2, 1.8, 0, Math.PI*2);
-                ctx.fill();
-
-                ctx.restore();
-            }
-
-            function drawEyebrows(lx, ly, rx, ry, p) {
-                ctx.save();
-                ctx.strokeStyle = '#ddd';
-                ctx.lineWidth = 3;
-                ctx.lineCap = 'round';
-                // Ceja izquierda
-                ctx.beginPath();
-                const angleRad = p.eyebrowAngle * Math.PI/180;
-                const browLen = 32;
-                const startX = lx - browLen/2;
-                const startY = ly - 42 + p.eyebrowSpacing * 0.2;
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(startX + browLen, startY - Math.sin(angleRad)*browLen*0.5);
-                ctx.stroke();
-                // Ceja derecha
-                ctx.beginPath();
-                ctx.moveTo(rx - browLen/2, startY);
-                ctx.lineTo(rx + browLen/2, startY - Math.sin(angleRad)*browLen*0.5);
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            function drawMouth(x, y, p) {
-                ctx.save();
-                ctx.strokeStyle = '#ddd';
-                ctx.fillStyle = '#ff99bb';
-                ctx.lineWidth = 3;
-                ctx.lineCap = 'round';
-                const mouthWidth = 24;
-                switch (p.mouthType) {
-                    case 'smile':
-                        ctx.beginPath();
-                        ctx.arc(x, y-5, mouthWidth/2, 0.1, Math.PI-0.1);
-                        ctx.stroke();
-                        break;
-                    case 'frown':
-                        ctx.beginPath();
-                        ctx.arc(x, y+15, mouthWidth/2, Math.PI+0.2, -0.2);
-                        ctx.stroke();
-                        break;
-                    case 'open':
-                        ctx.beginPath();
-                        ctx.ellipse(x, y+2, mouthWidth/3, 10, 0, 0, Math.PI*2);
-                        ctx.fillStyle = '#333';
-                        ctx.fill();
-                        ctx.stroke();
-                        break;
-                    case 'heart':
-                        drawHeart(x, y-8, 14);
-                        break;
-                    default:
-                        ctx.beginPath();
-                        ctx.moveTo(x-8, y);
-                        ctx.lineTo(x+8, y);
-                        ctx.stroke();
+                // Destellos (estrellas)
+                document.querySelectorAll('.sparkle-star').forEach(el => el.remove());
+                for (let i = 0; i < params.sparkle; i++) {
+                    setTimeout(() => addSparkle(screen), i * 80);
                 }
-                ctx.restore();
             }
 
-            function drawHeart(x, y, size) {
-                ctx.save();
-                ctx.fillStyle = '#ff4d7a';
-                ctx.beginPath();
-                const s = size/2;
-                ctx.moveTo(x, y + s*0.4);
-                ctx.bezierCurveTo(x, y, x - s, y, x - s, y + s*0.3);
-                ctx.bezierCurveTo(x - s, y + s*1.2, x, y + s*1.6, x, y + s*2);
-                ctx.bezierCurveTo(x, y + s*1.6, x + s, y + s*1.2, x + s, y + s*0.3);
-                ctx.bezierCurveTo(x + s, y, x, y, x, y + s*0.4);
-                ctx.fill();
-                ctx.restore();
+            function addBlush(eyeElement, alpha) {
+                const blush = document.createElement('div');
+                blush.className = 'blush';
+                blush.style.cssText = `
+                    position: absolute;
+                    width: 22px;
+                    height: 12px;
+                    background: rgba(255, 153, 170, ${alpha});
+                    border-radius: 50%;
+                    bottom: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 5;
+                    filter: blur(2px);
+                `;
+                eyeElement.style.position = 'relative';
+                eyeElement.appendChild(blush);
             }
 
-            function drawBlush(x, y, alpha) {
-                ctx.save();
-                ctx.globalAlpha = alpha * 0.6;
-                ctx.fillStyle = '#ff99aa';
-                ctx.beginPath();
-                ctx.ellipse(x, y, 10, 6, 0, 0, Math.PI*2);
-                ctx.fill();
-                ctx.restore();
+            function addTear(eyeElement) {
+                const tear = document.createElement('div');
+                tear.className = 'tear';
+                tear.style.cssText = `
+                    position: absolute;
+                    width: 5px;
+                    height: 10px;
+                    background: #aaddff;
+                    border-radius: 0 0 50% 50%;
+                    bottom: -5px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    z-index: 10;
+                    animation: fallDown 1.2s forwards;
+                `;
+                eyeElement.style.position = 'relative';
+                eyeElement.appendChild(tear);
+                setTimeout(() => tear.remove(), 1200);
             }
 
-            function drawTear(x, y, alpha) {
-                ctx.save();
-                ctx.globalAlpha = alpha;
-                ctx.fillStyle = '#aaddff';
-                ctx.beginPath();
-                ctx.moveTo(x, y-8);
-                ctx.lineTo(x+4, y+4);
-                ctx.lineTo(x-4, y+4);
-                ctx.fill();
-                ctx.restore();
+            function addParticle(emoji, container) {
+                const particle = document.createElement('span');
+                particle.className = 'particle';
+                particle.textContent = emoji;
+                particle.style.left = (30 + Math.random() * 40) + '%';
+                particle.style.top = (40 + Math.random() * 20) + '%';
+                container.appendChild(particle);
+                setTimeout(() => particle.remove(), 1500);
             }
 
-            function drawSparkle(x, y, size) {
-                ctx.save();
-                ctx.fillStyle = '#fffde7';
-                ctx.beginPath();
-                for (let i = 0; i < 4; i++) {
-                    const angle = i * Math.PI/2;
-                    const dx = Math.cos(angle)*size;
-                    const dy = Math.sin(angle)*size;
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x+dx*0.4, y+dy*0.4);
-                    ctx.lineTo(x+dx, y+dy);
-                    ctx.lineTo(x+dx*0.3, y+dy*0.3);
-                }
-                ctx.fill();
-                ctx.restore();
+            function addSparkle(container) {
+                const sparkle = document.createElement('span');
+                sparkle.className = 'sparkle-star';
+                sparkle.textContent = '✨';
+                sparkle.style.cssText = `
+                    position: absolute;
+                    left: ${20 + Math.random() * 60}%;
+                    top: ${20 + Math.random() * 60}%;
+                    font-size: ${10 + Math.random() * 16}px;
+                    animation: floatUp 1.5s forwards;
+                    pointer-events: none;
+                    z-index: 15;
+                `;
+                container.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 1500);
             }
 
-            // ============ ANIMACIÓN CONTINUA ============
-            function animationLoop() {
-                lerpParams(expressionParams, targetParams, 0.08);
-                drawFace();
-                requestAnimationFrame(animationLoop);
+            // Cambiar emoción
+            function setEmotion(emotion) {
+                currentEmotion = emotion;
+                const params = getExpressionVariant(emotion);
+                applyExpression(params);
+                // Cambiar tema del body
+                document.body.className = `theme-${emotion}`;
             }
 
-            // ============ INTERACCIÓN CON API ============
-            async function sendToAI(userText) {
-                if (!userText.trim()) return;
+            // Inicializar con neutral
+            setEmotion('neutral');
+
+            // ---------- FUNCIONALIDAD API ----------
+            async function sendPrompt() {
+                const question = textInput.value.trim();
+                if (!question) return;
+
                 // Mostrar mensaje usuario
-                addMessage('Tú', userText);
+                appendMessage('Tú', question);
                 textInput.value = '';
                 setEmotion('thinking');
                 speakingIndicator.classList.add('active');
 
-                const prompt = `Eres AIBI, una adorable mascota robot de bolsillo. Eres cariñosa, divertida y un poco traviesa. Responde SIEMPRE en español, con frases cortas (máximo 2 oraciones), y expresa emociones genuinas. Responde en formato JSON estricto: {"emotion": "happy", "text": "Tu respuesta aquí"}. Las emociones válidas: happy, sad, love, surprised, playful, sleepy, thinking, excited, grateful, shy, angry, silly. Pregunta del usuario: ${userText}`;
+                const prompt = `Eres AIBI, una mascota robot adorable. Responde en español, máximo 2 frases. Devuelve JSON: {"emotion": "happy", "text": "tu respuesta"}. Emociones: happy, sad, love, surprised, playful, sleepy, thinking, excited, grateful, shy, angry, silly. Pregunta: ${question}`;
 
                 try {
                     const response = await fetch(`${API_URL}?key=${API_KEY}`, {
@@ -585,31 +544,27 @@
                         })
                     });
 
-                    if (!response.ok) {
-                        const err = await response.json();
-                        throw new Error(err.error?.message || 'Error de conexión');
-                    }
-
                     const data = await response.json();
+                    if (!response.ok) throw new Error(data.error?.message || 'Error del servidor');
+
                     const rawText = data.candidates[0].content.parts[0].text;
-                    // Limpiar posible markdown
                     const cleanJson = rawText.replace(/```json|```/g, '').trim();
                     const parsed = JSON.parse(cleanJson);
 
-                    addMessage('AIBI', parsed.text);
+                    appendMessage('AIBI', parsed.text);
                     setEmotion(parsed.emotion || 'happy');
                     speakText(parsed.text);
 
-                } catch (error) {
-                    addMessage('AIBI', '¡Ups! Algo falló en mi cerebro digital 💔');
+                } catch (err) {
+                    appendMessage('AIBI', '¡Ups! Algo falló en mi cerebro digital 💔');
                     setEmotion('sad');
-                    console.error(error);
+                    console.error(err);
                 } finally {
                     speakingIndicator.classList.remove('active');
                 }
             }
 
-            function addMessage(sender, text) {
+            function appendMessage(sender, text) {
                 const div = document.createElement('div');
                 div.className = 'chat-msg';
                 div.innerHTML = `<strong>${sender}:</strong> ${text}`;
@@ -617,7 +572,7 @@
                 chatBox.scrollTop = chatBox.scrollHeight;
             }
 
-            // ============ VOZ (TTS) ============
+            // ---------- VOZ (TTS) ----------
             function speakText(text) {
                 if (!window.speechSynthesis) return;
                 window.speechSynthesis.cancel();
@@ -625,20 +580,15 @@
                 utterance.lang = 'es-ES';
                 utterance.rate = 1.05;
                 utterance.pitch = 1.2;
-                // Seleccionar voz femenina agradable
                 const voices = speechSynthesis.getVoices();
-                const preferred = voices.find(v => v.lang.startsWith('es') && v.name.includes('Female') || v.name.includes('Mónica') || v.name.includes('Paulina'));
+                const preferred = voices.find(v => v.lang.startsWith('es') && (v.name.includes('Mónica') || v.name.includes('Paulina') || v.name.toLowerCase().includes('female')));
                 if (preferred) utterance.voice = preferred;
-                else {
-                    const anySpanishFemale = voices.find(v => v.lang.startsWith('es') && (v.name.includes('female') || v.name.includes('mujer')));
-                    if (anySpanishFemale) utterance.voice = anySpanishFemale;
-                }
                 utterance.onstart = () => speakingIndicator.classList.add('active');
                 utterance.onend = () => speakingIndicator.classList.remove('active');
                 speechSynthesis.speak(utterance);
             }
 
-            // ============ RECONOCIMIENTO DE VOZ ============
+            // ---------- MICRÓFONO ----------
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             let recognition;
             if (SpeechRecognition) {
@@ -651,24 +601,20 @@
                     const transcript = event.results[0][0].transcript.trim();
                     if (transcript) {
                         textInput.value = transcript;
-                        sendToAI(transcript);
+                        sendPrompt();
                     }
                     micBtn.classList.remove('listening');
                 };
-
                 recognition.onerror = () => {
                     micBtn.classList.remove('listening');
                     setEmotion('sad');
                 };
-
-                recognition.onend = () => {
-                    micBtn.classList.remove('listening');
-                };
+                recognition.onend = () => micBtn.classList.remove('listening');
             }
 
             micBtn.addEventListener('click', () => {
                 if (!recognition) {
-                    alert('Reconocimiento de voz no soportado en este navegador.');
+                    alert('Reconocimiento de voz no soportado.');
                     return;
                 }
                 if (micBtn.classList.contains('listening')) {
@@ -681,65 +627,51 @@
                 }
             });
 
-            // ============ CARICIAS / TACTIL ============
+            // ---------- CARICIAS (TOUCH) ----------
             let touchStartTime = 0;
             let touchMoved = false;
-            canvas.addEventListener('touchstart', (e) => {
+            screen.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 touchStartTime = Date.now();
                 touchMoved = false;
             });
-            canvas.addEventListener('touchmove', (e) => {
+            screen.addEventListener('touchmove', (e) => {
                 e.preventDefault();
                 touchMoved = true;
-                // Pequeña vibración al acariciar
                 if (navigator.vibrate) navigator.vibrate(15);
-                // Cambiar a emoción amorosa durante la caricia
-                if (!expressionParams.heartParticles.length) {
+                if (currentEmotion !== 'love') {
                     setEmotion('love');
                 }
             });
-            canvas.addEventListener('touchend', (e) => {
+            screen.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 const duration = Date.now() - touchStartTime;
                 if (touchMoved && duration > 400) {
-                    // Caricia larga: muchos corazones
                     setEmotion('love');
                     if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-                    addMessage('AIBI', '¡Me encantan tus caricias! ❤️');
+                    appendMessage('AIBI', '¡Me encantan tus caricias! ❤️');
                     speakText('¡Qué rico! Me gusta cuando me acaricias.');
                 } else if (!touchMoved && duration < 300) {
-                    // Toque corto: expresión juguetona
                     setEmotion('playful');
                 }
             });
 
-            // Enviar con botón
-            sendBtn.addEventListener('click', () => {
-                const text = textInput.value.trim();
-                if (text) sendToAI(text);
-            });
+            // Enviar con Enter o botón
+            document.getElementById('send-btn').addEventListener('click', sendPrompt);
             textInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const text = textInput.value.trim();
-                    if (text) sendToAI(text);
-                }
+                if (e.key === 'Enter') sendPrompt();
             });
 
-            // ============ INICIALIZACIÓN ============
-            setEmotion('happy');
-            // Cargar voces para TTS
+            // Cargar voces
             if (window.speechSynthesis) {
                 speechSynthesis.getVoices();
-                speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); };
+                speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
             }
-            // Iniciar bucle de animación
-            animationLoop();
 
-            // Mensaje de bienvenida
+            // Mensaje inicial
             setTimeout(() => {
-                addMessage('AIBI', '¡Hola! Soy AIBI, tu mascota robot. Háblame o acaríciame 🐾');
-            }, 400);
+                appendMessage('AIBI', '¡Hola! Soy AIBI, tu mascota robot. Háblame o acaríciame 🐾');
+            }, 500);
         })();
     </script>
 </body>
