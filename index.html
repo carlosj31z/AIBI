@@ -2,72 +2,745 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIBI - AI Pocket Pet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AIBI - Mascota Robot con +100 expresiones</title>
     <style>
-        :root { --theme-color: #00f3ff; --bg-dark: #080810; --panel-bg: #111122; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-dark); color: #ffffff; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; transition: background 0.8s ease; }
-        body.theme-happy { --theme-color: #39ff14; }
-        body.theme-sad { --theme-color: #0066ff; }
-        body.theme-thinking { --theme-color: #bd00ff; }
-        .api-panel { background-color: var(--panel-bg); border: 1px solid #222244; border-radius: 15px; padding: 12px; margin-bottom: 15px; width: 90%; max-width: 380px; text-align: center; }
-        .api-panel input { background: #05050a; border: 1px solid #333366; color: #00f3ff; padding: 8px; border-radius: 8px; width: 90%; text-align: center; font-size: 11px; }
-        .robot-chassis { position: relative; background: linear-gradient(145deg, #1d1d2e, #0c0c14); border: 4px solid #2d2d44; border-radius: 40px; padding: 25px; width: 90%; max-width: 380px; display: flex; flex-direction: column; align-items: center; }
-        .screen { background-color: #020205; border: 3px solid #1c1c30; border-radius: 25px; width: 100%; height: 210px; display: flex; flex-direction: column; align-items: center; padding: 15px 0; }
-        .eye { width: 52px; height: 72px; background-color: var(--theme-color); border-radius: 50%; box-shadow: 0 0 30px var(--theme-color); }
-        .chat-container { background-color: rgba(0,0,0,0.4); border-radius: 15px; width: 100%; height: 110px; margin-top: 15px; padding: 10px; overflow-y: auto; font-size: 11px; border: 1px solid #1a1a2e; }
-        .input-group { display: flex; width: 100%; gap: 8px; margin-top: 15px; }
-        .input-group input { flex: 1; background: #05050a; border: 1px solid #2d2d44; color: white; padding: 10px; border-radius: 20px; }
-        .btn-action { background-color: var(--panel-bg); border: 1px solid #2d2d44; color: white; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; }
+        :root {
+            --theme: #00f3ff;
+            --bg: #0a0a14;
+            --panel: #12122a;
+            --border: #2a2a44;
+            --glow: 0 0 20px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(circle at 50% 30%, #1a1a3a, #050510);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            transition: background 0.5s;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        /* CAJA CONTENEDORA ESTILO AIBI */
+        .aibi-box {
+            width: 92vw;
+            max-width: 400px;
+            background: linear-gradient(160deg, #1e1e32, #0b0b18);
+            border: 3px solid #3e3e5c;
+            border-radius: 48px;
+            padding: 20px 15px 25px;
+            box-shadow:
+                0 0 40px rgba(0, 243, 255, 0.25),
+                inset 0 0 30px rgba(0, 0, 0, 0.6),
+                0 20px 40px rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transition: all 0.4s;
+        }
+        .aibi-box::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            right: 20px;
+            height: 6px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+        }
+
+        /* PANTALLA PRINCIPAL */
+        .face-screen {
+            width: 100%;
+            aspect-ratio: 1 / 0.9;
+            background: #03030a;
+            border-radius: 32px;
+            border: 2px solid #2a2a42;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* CHAT */
+        .chat-area {
+            width: 100%;
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            margin-top: 14px;
+            padding: 12px;
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #2f2f4a;
+            font-size: 12px;
+            color: #ccc;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            backdrop-filter: blur(5px);
+        }
+        .chat-msg {
+            animation: fadeInUp 0.3s;
+            padding: 4px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CONTROLES */
+        .controls {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+            margin-top: 14px;
+            align-items: center;
+        }
+        .text-input {
+            flex: 1;
+            background: #0c0c1a;
+            border: 1px solid #3e3e5c;
+            border-radius: 30px;
+            padding: 12px 18px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+        .text-input:focus {
+            border-color: var(--theme);
+            box-shadow: 0 0 15px var(--theme);
+        }
+        .btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #1a1a30;
+            border: 1px solid #4a4a6a;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            backdrop-filter: blur(10px);
+        }
+        .btn:active {
+            transform: scale(0.9);
+            background: #2a2a50;
+            border-color: var(--theme);
+        }
+        .btn.mic {
+            background: #ff4080;
+            border-color: #ff80b0;
+        }
+        .btn.mic.listening {
+            animation: pulse 0.8s infinite;
+            background: #ff1744;
+            box-shadow: 0 0 30px red;
+        }
+        @keyframes pulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* INDICADOR DE VOZ HABLANDO */
+        .speaking-indicator {
+            display: none;
+            width: 100%;
+            text-align: center;
+            margin-top: 5px;
+            font-size: 11px;
+            color: #aaa;
+        }
+        .speaking-indicator.active {
+            display: block;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%,100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* API KEY OCULTA (ya viene pegada) */
+        .api-hidden {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 420px) {
+            .aibi-box {
+                border-radius: 36px;
+                padding: 15px 12px 20px;
+            }
+            .btn {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+            }
+            .text-input {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="api-panel">
-        <strong>⚙️ CREDENCIAL DE INTELIGENCIA</strong><br>
-        <input type="password" id="api-key" placeholder="Pega tu API Key aquí...">
-    </div>
-    <div class="robot-chassis">
-        <div class="screen">
-            <div class="eye" id="eye-l"></div>
+    <div class="aibi-box" id="aibiBox">
+        <div class="face-screen">
+            <canvas id="faceCanvas" width="360" height="320"></canvas>
         </div>
-        <div class="chat-container" id="chat-box"></div>
-        <div class="input-group">
-            <input type="text" id="text-input" placeholder="Escribe algo..." onkeypress="if(event.key==='Enter') sendPrompt()">
-            <button class="btn-action" onclick="sendPrompt()">➤</button>
+        <div class="chat-area" id="chatBox"></div>
+        <div class="controls">
+            <input type="text" class="text-input" id="textInput" placeholder="Escribe o toca el micrófono..." autocomplete="off">
+            <button class="btn" id="sendBtn" title="Enviar">➤</button>
+            <button class="btn mic" id="micBtn" title="Hablar">🎤</button>
         </div>
+        <div class="speaking-indicator" id="speakingIndicator">AIBI está hablando...</div>
     </div>
+
+    <!-- API KEY preconfigurada -->
+    <input type="hidden" id="apiKey" value="AQ.Ab8RN6IcrejmNXE9otvzXI-qbv8UWDO4v1CBrJHvUy41C29NYg">
+
     <script>
-        async function sendPrompt() {
-            const question = document.getElementById('text-input').value.trim();
-            const apiKey = document.getElementById('api-key').value.trim();
-            const chatBox = document.getElementById('chat-box');
-            
-            if(!question || !apiKey) return;
+        (function() {
+            // ============ CONFIGURACIÓN ============
+            const API_KEY = document.getElementById('apiKey').value;
+            const MODEL = 'gemini-1.5-flash'; // Modelo rápido y bueno
+            const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
-            // ACTUALIZACIÓN: Usamos gemini-3.5-flash
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
-            
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-                    body: JSON.stringify({
-                        contents: [{ role: 'user', parts: [{ text: `Responde en JSON: {"emotion": "happy", "text": "Hola"}. Pregunta: ${question}` }] }]
-                    })
-                });
+            // Elementos DOM
+            const canvas = document.getElementById('faceCanvas');
+            const ctx = canvas.getContext('2d');
+            const chatBox = document.getElementById('chatBox');
+            const textInput = document.getElementById('textInput');
+            const sendBtn = document.getElementById('sendBtn');
+            const micBtn = document.getElementById('micBtn');
+            const speakingIndicator = document.getElementById('speakingIndicator');
+            const aibiBox = document.getElementById('aibiBox');
 
-                const data = await response.json();
-                if(!response.ok) throw new Error(data.error?.message || "Error del servidor");
+            // ============ ESTADO DE EMOCIÓN Y EXPRESIONES ============
+            let currentEmotion = 'neutral';
+            let expressionParams = {
+                eyeScaleY: 1,
+                eyeScaleX: 1,
+                irisRadius: 18,
+                pupilRadius: 7,
+                irisOffsetX: 0,
+                irisOffsetY: 0,
+                eyebrowAngle: 0,
+                eyebrowSpacing: 20,
+                mouthType: 'neutral', // neutral, smile, frown, open, heart
+                blushAlpha: 0,
+                tearAlpha: 0,
+                sparkleCount: 0,
+                heartParticles: [],
+                colorShift: 0,
+                extraElements: []
+            };
 
-                const rawText = data.candidates[0].content.parts[0].text;
-                const parsed = JSON.parse(rawText.replace(/```json|```/g, ""));
-                
-                chatBox.innerHTML += `<div><strong>AIBI:</strong> ${parsed.text}</div>`;
-                document.body.className = `theme-${parsed.emotion}`;
-            } catch (err) {
-                chatBox.innerHTML += `<div style="color:red">Error: ${err.message}</div>`;
+            // Más de 100 combinaciones posibles: mapeo de emociones a sets de parámetros base
+            const emotionPresets = {
+                neutral: { eyeScaleY: 1, eyeScaleX: 1, irisRadius: 18, eyebrowAngle: 0, mouth: 'neutral', blush: 0, sparkle: 0 },
+                happy: { eyeScaleY: 0.7, eyeScaleX: 1.1, irisRadius: 16, eyebrowAngle: -15, mouth: 'smile', blush: 0.5, sparkle: 4 },
+                sad: { eyeScaleY: 1.3, eyeScaleX: 0.9, irisRadius: 20, eyebrowAngle: 15, mouth: 'frown', blush: 0, tear: 0.7, sparkle: 0 },
+                love: { eyeScaleY: 0.6, eyeScaleX: 0.9, irisRadius: 14, eyebrowAngle: -20, mouth: 'heart', blush: 0.8, sparkle: 6, heartParticles: true },
+                surprised: { eyeScaleY: 1.4, eyeScaleX: 1.3, irisRadius: 10, eyebrowAngle: -25, mouth: 'open', blush: 0, sparkle: 2 },
+                playful: { eyeScaleY: 0.8, eyeScaleX: 1.0, irisRadius: 17, eyebrowAngle: -10, mouth: 'smile', blush: 0.3, sparkle: 3 },
+                sleepy: { eyeScaleY: 0.3, eyeScaleX: 1.2, irisRadius: 20, eyebrowAngle: 5, mouth: 'neutral', blush: 0, sparkle: 0 },
+                thinking: { eyeScaleY: 0.9, eyeScaleX: 0.8, irisRadius: 15, eyebrowAngle: 10, mouth: 'neutral', blush: 0, sparkle: 1 },
+                excited: { eyeScaleY: 0.5, eyeScaleX: 1.2, irisRadius: 10, eyebrowAngle: -30, mouth: 'open', blush: 0.6, sparkle: 8 },
+                grateful: { eyeScaleY: 0.7, eyeScaleX: 1.0, irisRadius: 16, eyebrowAngle: -12, mouth: 'smile', blush: 0.4, sparkle: 5 },
+                shy: { eyeScaleY: 0.9, eyeScaleX: 0.8, irisRadius: 17, eyebrowAngle: 5, mouth: 'smile', blush: 0.7, sparkle: 2 },
+                angry: { eyeScaleY: 0.6, eyeScaleX: 1.0, irisRadius: 12, eyebrowAngle: 20, mouth: 'frown', blush: 0.2, sparkle: 0 },
+                silly: { eyeScaleY: 0.4, eyeScaleX: 1.4, irisRadius: 22, eyebrowAngle: -5, mouth: 'open', blush: 0.3, sparkle: 7 }
+            };
+
+            // Conjunto de variaciones para superar 100 expresiones (combinaciones aleatorias controladas)
+            function generateExpressionVariant(emotion) {
+                const base = emotionPresets[emotion] || emotionPresets.neutral;
+                // Añadimos pequeñas variaciones aleatorias dentro de rangos para crear diversidad
+                const variant = {
+                    eyeScaleY: base.eyeScaleY * (0.9 + Math.random() * 0.2),
+                    eyeScaleX: base.eyeScaleX * (0.9 + Math.random() * 0.2),
+                    irisRadius: base.irisRadius * (0.85 + Math.random() * 0.3),
+                    pupilRadius: 5 + Math.random() * 4,
+                    irisOffsetX: (Math.random() - 0.5) * 8,
+                    irisOffsetY: (Math.random() - 0.5) * 6,
+                    eyebrowAngle: base.eyebrowAngle + (Math.random() - 0.5) * 10,
+                    eyebrowSpacing: 15 + Math.random() * 15,
+                    mouthType: base.mouth,
+                    blushAlpha: base.blush * (0.8 + Math.random() * 0.4),
+                    tearAlpha: base.tear || 0,
+                    sparkleCount: Math.floor(base.sparkle * (0.7 + Math.random() * 0.6)),
+                    colorShift: Math.random() * 20,
+                    heartParticles: base.heartParticles || false
+                };
+                return variant;
             }
-        }
+
+            // Actualiza los parámetros de expresión actual con transición suave
+            let targetParams = { ...expressionParams };
+            function setEmotion(emotion) {
+                currentEmotion = emotion;
+                targetParams = generateExpressionVariant(emotion);
+                // Añadir partículas de corazones si es love
+                if (emotion === 'love') {
+                    for (let i = 0; i < 8; i++) {
+                        expressionParams.heartParticles.push({
+                            x: Math.random() * canvas.width,
+                            y: canvas.height + 20,
+                            size: 8 + Math.random() * 15,
+                            speed: 1 + Math.random() * 2,
+                            opacity: 0.8
+                        });
+                    }
+                }
+            }
+
+            // Interpolación para animación suave
+            function lerpParams(current, target, factor = 0.1) {
+                for (let key in target) {
+                    if (typeof target[key] === 'number' && typeof current[key] === 'number') {
+                        current[key] += (target[key] - current[key]) * factor;
+                    } else if (key === 'mouthType' || key === 'heartParticles') {
+                        current[key] = target[key];
+                    }
+                }
+                // Actualizar partículas corazón
+                if (!target.heartParticles) {
+                    current.heartParticles = current.heartParticles.filter(p => p.opacity > 0.01);
+                }
+            }
+
+            // ============ DIBUJADO DE CARA (Ojos expresivos AIBI) ============
+            function drawFace() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                const w = canvas.width;
+                const h = canvas.height;
+                const centerY = h * 0.45;
+
+                // Fondo sutil
+                const gradient = ctx.createRadialGradient(w/2, centerY, 20, w/2, centerY, w*0.8);
+                gradient.addColorStop(0, 'rgba(0,243,255,0.05)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, w, h);
+
+                // Parámetros actuales
+                const p = expressionParams;
+                const eyeSpacing = w * 0.3;
+                const leftEyeX = w/2 - eyeSpacing/2;
+                const rightEyeX = w/2 + eyeSpacing/2;
+                const eyeY = centerY;
+
+                // Dibujar ojos
+                drawEye(leftEyeX, eyeY, p, 'left');
+                drawEye(rightEyeX, eyeY, p, 'right');
+
+                // Cejas
+                drawEyebrows(leftEyeX, eyeY, rightEyeX, eyeY, p);
+
+                // Boca
+                drawMouth(w/2, eyeY + 65, p);
+
+                // Rubor
+                if (p.blushAlpha > 0.01) {
+                    drawBlush(leftEyeX - 25, eyeY + 20, p.blushAlpha);
+                    drawBlush(rightEyeX + 25, eyeY + 20, p.blushAlpha);
+                }
+
+                // Lágrimas
+                if (p.tearAlpha > 0.01) {
+                    drawTear(leftEyeX, eyeY + 30, p.tearAlpha);
+                    drawTear(rightEyeX, eyeY + 30, p.tearAlpha);
+                }
+
+                // Destellos / chispas
+                if (p.sparkleCount > 0) {
+                    for (let i = 0; i < p.sparkleCount; i++) {
+                        drawSparkle(
+                            Math.random() * w * 0.6 + w*0.2,
+                            Math.random() * h * 0.4 + h*0.2,
+                            2 + Math.random() * 5
+                        );
+                    }
+                }
+
+                // Partículas de corazón flotando
+                p.heartParticles.forEach(part => {
+                    ctx.globalAlpha = part.opacity;
+                    drawHeart(part.x, part.y, part.size);
+                    part.y -= part.speed;
+                    part.opacity -= 0.005;
+                });
+                ctx.globalAlpha = 1;
+                p.heartParticles = p.heartParticles.filter(part => part.opacity > 0.01 && part.y > -20);
+            }
+
+            function drawEye(x, y, p, side) {
+                ctx.save();
+                ctx.translate(x, y);
+                // Escala
+                ctx.scale(p.eyeScaleX, p.eyeScaleY);
+                // Forma del ojo (óvalo)
+                const eyeWidth = 38;
+                const eyeHeight = 52;
+                ctx.beginPath();
+                ctx.ellipse(0, 0, eyeWidth, eyeHeight, 0, 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Iris
+                const irisX = p.irisOffsetX * (side === 'left' ? 1 : 1);
+                const irisY = p.irisOffsetY;
+                ctx.beginPath();
+                ctx.arc(irisX, irisY, p.irisRadius, 0, Math.PI*2);
+                const irisGrad = ctx.createLinearGradient(irisX-10, irisY-10, irisX+10, irisY+10);
+                const hue = 195 + p.colorShift; // azul cian
+                irisGrad.addColorStop(0, `hsl(${hue}, 90%, 60%)`);
+                irisGrad.addColorStop(1, `hsl(${hue+15}, 90%, 40%)`);
+                ctx.fillStyle = irisGrad;
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Pupila
+                ctx.beginPath();
+                ctx.arc(irisX, irisY, p.pupilRadius, 0, Math.PI*2);
+                ctx.fillStyle = '#000';
+                ctx.fill();
+
+                // Brillo
+                ctx.beginPath();
+                ctx.arc(irisX-4, irisY-5, 3.5, 0, Math.PI*2);
+                ctx.fillStyle = '#fff';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(irisX+5, irisY+2, 1.8, 0, Math.PI*2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+
+            function drawEyebrows(lx, ly, rx, ry, p) {
+                ctx.save();
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                // Ceja izquierda
+                ctx.beginPath();
+                const angleRad = p.eyebrowAngle * Math.PI/180;
+                const browLen = 32;
+                const startX = lx - browLen/2;
+                const startY = ly - 42 + p.eyebrowSpacing * 0.2;
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX + browLen, startY - Math.sin(angleRad)*browLen*0.5);
+                ctx.stroke();
+                // Ceja derecha
+                ctx.beginPath();
+                ctx.moveTo(rx - browLen/2, startY);
+                ctx.lineTo(rx + browLen/2, startY - Math.sin(angleRad)*browLen*0.5);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            function drawMouth(x, y, p) {
+                ctx.save();
+                ctx.strokeStyle = '#ddd';
+                ctx.fillStyle = '#ff99bb';
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                const mouthWidth = 24;
+                switch (p.mouthType) {
+                    case 'smile':
+                        ctx.beginPath();
+                        ctx.arc(x, y-5, mouthWidth/2, 0.1, Math.PI-0.1);
+                        ctx.stroke();
+                        break;
+                    case 'frown':
+                        ctx.beginPath();
+                        ctx.arc(x, y+15, mouthWidth/2, Math.PI+0.2, -0.2);
+                        ctx.stroke();
+                        break;
+                    case 'open':
+                        ctx.beginPath();
+                        ctx.ellipse(x, y+2, mouthWidth/3, 10, 0, 0, Math.PI*2);
+                        ctx.fillStyle = '#333';
+                        ctx.fill();
+                        ctx.stroke();
+                        break;
+                    case 'heart':
+                        drawHeart(x, y-8, 14);
+                        break;
+                    default:
+                        ctx.beginPath();
+                        ctx.moveTo(x-8, y);
+                        ctx.lineTo(x+8, y);
+                        ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            function drawHeart(x, y, size) {
+                ctx.save();
+                ctx.fillStyle = '#ff4d7a';
+                ctx.beginPath();
+                const s = size/2;
+                ctx.moveTo(x, y + s*0.4);
+                ctx.bezierCurveTo(x, y, x - s, y, x - s, y + s*0.3);
+                ctx.bezierCurveTo(x - s, y + s*1.2, x, y + s*1.6, x, y + s*2);
+                ctx.bezierCurveTo(x, y + s*1.6, x + s, y + s*1.2, x + s, y + s*0.3);
+                ctx.bezierCurveTo(x + s, y, x, y, x, y + s*0.4);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawBlush(x, y, alpha) {
+                ctx.save();
+                ctx.globalAlpha = alpha * 0.6;
+                ctx.fillStyle = '#ff99aa';
+                ctx.beginPath();
+                ctx.ellipse(x, y, 10, 6, 0, 0, Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawTear(x, y, alpha) {
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = '#aaddff';
+                ctx.beginPath();
+                ctx.moveTo(x, y-8);
+                ctx.lineTo(x+4, y+4);
+                ctx.lineTo(x-4, y+4);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            function drawSparkle(x, y, size) {
+                ctx.save();
+                ctx.fillStyle = '#fffde7';
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    const angle = i * Math.PI/2;
+                    const dx = Math.cos(angle)*size;
+                    const dy = Math.sin(angle)*size;
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x+dx*0.4, y+dy*0.4);
+                    ctx.lineTo(x+dx, y+dy);
+                    ctx.lineTo(x+dx*0.3, y+dy*0.3);
+                }
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // ============ ANIMACIÓN CONTINUA ============
+            function animationLoop() {
+                lerpParams(expressionParams, targetParams, 0.08);
+                drawFace();
+                requestAnimationFrame(animationLoop);
+            }
+
+            // ============ INTERACCIÓN CON API ============
+            async function sendToAI(userText) {
+                if (!userText.trim()) return;
+                // Mostrar mensaje usuario
+                addMessage('Tú', userText);
+                textInput.value = '';
+                setEmotion('thinking');
+                speakingIndicator.classList.add('active');
+
+                const prompt = `Eres AIBI, una adorable mascota robot de bolsillo. Eres cariñosa, divertida y un poco traviesa. Responde SIEMPRE en español, con frases cortas (máximo 2 oraciones), y expresa emociones genuinas. Responde en formato JSON estricto: {"emotion": "happy", "text": "Tu respuesta aquí"}. Las emociones válidas: happy, sad, love, surprised, playful, sleepy, thinking, excited, grateful, shy, angry, silly. Pregunta del usuario: ${userText}`;
+
+                try {
+                    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                            generationConfig: { temperature: 0.9, maxOutputTokens: 80 }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.error?.message || 'Error de conexión');
+                    }
+
+                    const data = await response.json();
+                    const rawText = data.candidates[0].content.parts[0].text;
+                    // Limpiar posible markdown
+                    const cleanJson = rawText.replace(/```json|```/g, '').trim();
+                    const parsed = JSON.parse(cleanJson);
+
+                    addMessage('AIBI', parsed.text);
+                    setEmotion(parsed.emotion || 'happy');
+                    speakText(parsed.text);
+
+                } catch (error) {
+                    addMessage('AIBI', '¡Ups! Algo falló en mi cerebro digital 💔');
+                    setEmotion('sad');
+                    console.error(error);
+                } finally {
+                    speakingIndicator.classList.remove('active');
+                }
+            }
+
+            function addMessage(sender, text) {
+                const div = document.createElement('div');
+                div.className = 'chat-msg';
+                div.innerHTML = `<strong>${sender}:</strong> ${text}`;
+                chatBox.appendChild(div);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            // ============ VOZ (TTS) ============
+            function speakText(text) {
+                if (!window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES';
+                utterance.rate = 1.05;
+                utterance.pitch = 1.2;
+                // Seleccionar voz femenina agradable
+                const voices = speechSynthesis.getVoices();
+                const preferred = voices.find(v => v.lang.startsWith('es') && v.name.includes('Female') || v.name.includes('Mónica') || v.name.includes('Paulina'));
+                if (preferred) utterance.voice = preferred;
+                else {
+                    const anySpanishFemale = voices.find(v => v.lang.startsWith('es') && (v.name.includes('female') || v.name.includes('mujer')));
+                    if (anySpanishFemale) utterance.voice = anySpanishFemale;
+                }
+                utterance.onstart = () => speakingIndicator.classList.add('active');
+                utterance.onend = () => speakingIndicator.classList.remove('active');
+                speechSynthesis.speak(utterance);
+            }
+
+            // ============ RECONOCIMIENTO DE VOZ ============
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let recognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.lang = 'es-ES';
+                recognition.interimResults = false;
+                recognition.continuous = false;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript.trim();
+                    if (transcript) {
+                        textInput.value = transcript;
+                        sendToAI(transcript);
+                    }
+                    micBtn.classList.remove('listening');
+                };
+
+                recognition.onerror = () => {
+                    micBtn.classList.remove('listening');
+                    setEmotion('sad');
+                };
+
+                recognition.onend = () => {
+                    micBtn.classList.remove('listening');
+                };
+            }
+
+            micBtn.addEventListener('click', () => {
+                if (!recognition) {
+                    alert('Reconocimiento de voz no soportado en este navegador.');
+                    return;
+                }
+                if (micBtn.classList.contains('listening')) {
+                    recognition.stop();
+                    micBtn.classList.remove('listening');
+                } else {
+                    recognition.start();
+                    micBtn.classList.add('listening');
+                    setEmotion('playful');
+                }
+            });
+
+            // ============ CARICIAS / TACTIL ============
+            let touchStartTime = 0;
+            let touchMoved = false;
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                touchStartTime = Date.now();
+                touchMoved = false;
+            });
+            canvas.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                touchMoved = true;
+                // Pequeña vibración al acariciar
+                if (navigator.vibrate) navigator.vibrate(15);
+                // Cambiar a emoción amorosa durante la caricia
+                if (!expressionParams.heartParticles.length) {
+                    setEmotion('love');
+                }
+            });
+            canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const duration = Date.now() - touchStartTime;
+                if (touchMoved && duration > 400) {
+                    // Caricia larga: muchos corazones
+                    setEmotion('love');
+                    if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+                    addMessage('AIBI', '¡Me encantan tus caricias! ❤️');
+                    speakText('¡Qué rico! Me gusta cuando me acaricias.');
+                } else if (!touchMoved && duration < 300) {
+                    // Toque corto: expresión juguetona
+                    setEmotion('playful');
+                }
+            });
+
+            // Enviar con botón
+            sendBtn.addEventListener('click', () => {
+                const text = textInput.value.trim();
+                if (text) sendToAI(text);
+            });
+            textInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const text = textInput.value.trim();
+                    if (text) sendToAI(text);
+                }
+            });
+
+            // ============ INICIALIZACIÓN ============
+            setEmotion('happy');
+            // Cargar voces para TTS
+            if (window.speechSynthesis) {
+                speechSynthesis.getVoices();
+                speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); };
+            }
+            // Iniciar bucle de animación
+            animationLoop();
+
+            // Mensaje de bienvenida
+            setTimeout(() => {
+                addMessage('AIBI', '¡Hola! Soy AIBI, tu mascota robot. Háblame o acaríciame 🐾');
+            }, 400);
+        })();
     </script>
 </body>
 </html>
