@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIBI - AI Pocket Pet</title>
+    <style>
+        :root {
+            --theme-color: #00f3ff;
+            --bg-dark: #080810;
+            --panel-bg: #111122;
+            --border-glow: rgba(0, 243, 255, 0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.8s ease;
+        }
+
+        /* Temas dinámicos según emoción */
+        body.theme-happy { --theme-color: #39ff14; --border-glow: rgba(57, 255, 20, 0.3); }
+        body.theme-sad { --theme-color: #0066ff; --border-glow: rgba(0, 102, 255, 0.3); }
+        body.theme-angry { --theme-color: #ff003c; --border-glow: rgba(255, 0, 60, 0.3); }
+        body.theme-surprised { --theme-color: #ffaa00; --border-glow: rgba(255, 170, 0, 0.3); }
+        body.theme-thinking { --theme-color: #bd00ff; --border-glow: rgba(189, 0, 255, 0.3); }
+        body.theme-sleepy { --theme-color: #8a2be2; --border-glow: rgba(138, 43, 226, 0.2); }
+        body.theme-excited { --theme-color: #ff007f; --border-glow: rgba(255, 0, 127, 0.3); }
+
+        /* Panel de Configuración de API */
+        .api-panel {
+            background-color: var(--panel-bg);
+            border: 1px solid #222244;
+            border-radius: 15px;
+            padding: 12px;
+            margin-bottom: 15px;
+            width: 90%;
+            max-width: 380px;
+            box-sizing: border-box;
+            font-size: 12px;
+            text-align: center;
+        }
+        .api-panel input {
+            background: #05050a;
+            border: 1px solid #333366;
+            color: #00f3ff;
+            padding: 6px 10px;
+            border-radius: 8px;
+            width: 80%;
+            margin-top: 5px;
+            text-align: center;
+        }
+
+        /* Chasis del Robot */
+        .robot-chassis {
+            position: relative;
+            background: linear-gradient(145deg, #1d1d2e, #0c0c14);
+            border: 4px solid #2d2d44;
+            border-radius: 40px;
+            padding: 25px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7), inset 0 2px 5px rgba(255,255,255,0.05);
+            width: 90%;
+            max-width: 380px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Pantalla OLED */
+        .screen {
+            background-color: #020205;
+            border: 3px solid #1c1c30;
+            border-radius: 25px;
+            width: 100%;
+            height: 210px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 0 15px var(--border-glow);
+            cursor: pointer;
+        }
+
+        /* Ojos del Robot */
+        .eyes-container {
+            display: flex;
+            gap: 50px;
+            justify-content: center;
+            align-items: center;
+            height: 90px;
+            margin-top: 15px;
+        }
+
+        .eye {
+            width: 52px;
+            height: 72px;
+            background-color: var(--theme-color);
+            border-radius: 50% 50% 45% 45%;
+            box-shadow: 0 0 30px var(--theme-color), inset 0 0 10px rgba(255, 255, 255, 0.8);
+            transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Animación básica de parpadeo (Idle) */
+        @keyframes blink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.05); }
+        }
+        .state-idle { animation: blink 4s infinite; }
+
+        /* Emociones y Gestos */
+        .state-happy { border-radius: 50% 50% 10% 10%; transform: scaleY(0.7) translateY(10px); }
+        .state-sad.left { transform: rotate(15deg) translateY(8px); border-radius: 10% 10% 50% 50%; }
+        .state-sad.right { transform: rotate(-15deg) translateY(8px); border-radius: 10% 10% 50% 50%; }
+        .state-angry.left { transform: rotate(-15deg) translateY(5px); border-radius: 50% 50% 10% 50%; }
+        .state-angry.right { transform: rotate(15deg) translateY(5px); border-radius: 50% 50% 50% 10%; }
+        .state-surprised { border-radius: 50%; width: 55px; height: 55px; transform: scale(1.1); }
+        
+        @keyframes thinkGlow { 0% { opacity: 0.4; } 100% { opacity: 1; } }
+        .state-thinking { width: 45px; height: 45px; border-radius: 50% 20% 50% 20%; animation: thinkGlow 0.5s infinite alternate; }
+        .state-sleepy { height: 8px; border-radius: 10px; transform: translateY(20px); opacity: 0.6; }
+        
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        .state-excited { border-radius: 50% 50% 30% 30%; animation: bounce 0.4s infinite; }
+        .state-scanning { width: 70px; height: 6px; border-radius: 3px; transform: translateY(15px); }
+
+        /* Waveform de Voz (Se activa al hablar la IA) */
+        .voice-wave {
+            display: flex;
+            gap: 4px;
+            height: 20px;
+            align-items: center;
+        }
+        .voice-wave span {
+            width: 3px;
+            height: 4px;
+            background-color: var(--theme-color);
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+        .talking .voice-wave span {
+            animation: bounceWave 0.2s infinite alternate;
+        }
+        .talking .voice-wave span:nth-child(2) { animation-delay: 0.05s; }
+        .talking .voice-wave span:nth-child(3) { animation-delay: 0.1s; }
+        .talking .voice-wave span:nth-child(4) { animation-delay: 0.15s; }
+
+        @keyframes bounceWave {
+            0% { height: 4px; }
+            100% { height: 20px; }
+        }
+
+        .status-bar {
+            font-family: monospace;
+            font-size: 10px;
+            color: var(--theme-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 5px var(--theme-color);
+        }
+
+        /* Escáner de Rostro */
+        .webcam-container {
+            width: 140px;
+            height: 100px;
+            border-radius: 15px;
+            border: 2px dashed var(--theme-color);
+            overflow: hidden;
+            position: relative;
+            background-color: #05050a;
+            box-shadow: 0 0 15px var(--border-glow);
+            display: none;
+            margin-top: 15px;
+        }
+        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0.7; }
+        .laser-line {
+            position: absolute;
+            width: 100%; height: 3px;
+            background-color: var(--theme-color);
+            box-shadow: 0 0 10px var(--theme-color);
+            top: 0; animation: sweep 1.5s linear infinite;
+        }
+        @keyframes sweep { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+
+        /* Contenedor de Chat Integrado */
+        .chat-container {
+            background-color: rgba(0,0,0,0.4);
+            border-radius: 15px;
+            width: 100%;
+            height: 90px;
+            margin-top: 15px;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            font-size: 12px;
+            border: 1px solid #1a1a2e;
+        }
+        .chat-line { margin-bottom: 5px; }
+        .chat-line.user { color: #00f3ff; }
+        .chat-line.ai { color: #39ff14; }
+
+        /* Controles de Entrada */
+        .input-group {
+            display: flex;
+            width: 100%;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .input-group input {
+            flex: 1;
+            background: #05050a;
+            border: 1px solid #2d2d44;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--theme-color);
+        }
+
+        .btn-action {
+            background-color: var(--panel-bg);
+            border: 1px solid #2d2d44;
+            color: white;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-action:hover {
+            border-color: var(--theme-color);
+            box-shadow: 0 0 10px var(--border-glow);
+        }
+        .btn-action.active {
+            background-color: #ff0055;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 0, 85, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 85, 0); }
+        }
+
+        .hint-text {
+            font-size: 11px;
+            opacity: 0.4;
+            text-align: center;
+            margin-top: 15px;
+            max-width: 320px;
+        }
+    </style>
+</head>
+<body class="theme-idle">
+
+    <!-- Panel de API Secreto -->
+    <div class="api-panel">
+        <strong>⚙️ CREDENCIAL DE INTELIGENCIA</strong><br>
+        <input type="password" id="api-key" value="AQ.Ab8RN6L8Eck24PO2fdxN7ViAbc9RopNAm-L4hWT4Fi9lNQ2jPg" placeholder="Escribe aquí tu API Key de Gemini...">
+    </div>
+
+    <!-- Robot Mascota AIBI -->
+    <div class="robot-chassis" id="robot">
+        
+        <!-- Pantalla OLED -->
+        <div class="screen" id="screen" onclick="caricia()">
+            <div class="eyes-container">
+                <div class="eye left state-idle" id="eye-l"></div>
+                <div class="eye right state-idle" id="eye-r"></div>
+            </div>
+            
+            <!-- Onda de voz animada -->
+            <div class="voice-wave" id="wave">
+                <span></span><span></span><span></span><span></span>
+            </div>
+
+            <div class="status-bar" id="status-text">STATUS: ONLINE</div>
+        </div>
+
+        <!-- Visor de Escaneo -->
+        <div class="webcam-container" id="camera-box">
+            <video id="webcam" autoplay playsinline muted></video>
+            <div class="laser-line"></div>
+        </div>
+
+        <!-- Visor de Chat de Diagnóstico -->
+        <div class="chat-container" id="chat-box">
+            <div class="chat-line ai">[SISTEMA]: Robot iniciado. Listo para hablar.</div>
+        </div>
+
+        <!-- Barra de Entrada e Interacción -->
+        <div class="input-group">
+            <input type="text" id="text-input" placeholder="Escríbele algo a AIBI..." onkeypress="handleKeyPress(event)">
+            <button class="btn-action" id="btn-mic" onclick="toggleSpeech()" title="Hablar por micrófono">🎤</button>
+            <button class="btn-action" id="btn-scan" onclick="startCameraScan()" title="Escanear Entorno">📷</button>
+        </div>
+
+    </div>
+
+    <div class="hint-text">
+        Haz clic en la pantalla de AIBI para acariciarlo y escuchar su ronroneo sintetizado.
+    </div>
+
+    <script>
+        const eyeL = document.getElementById('eye-l');
+        const eyeR = document.getElementById('eye-r');
+        const statusText = document.getElementById('status-text');
+        const body = document.body;
+        const chatBox = document.getElementById('chat-box');
+        const textInput = document.getElementById('text-input');
+        const btnMic = document.getElementById('btn-mic');
+        const cameraBox = document.getElementById('camera-box');
+        const robotScreen = document.getElementById('screen');
+
+        let isSpeaking = false;
+        let recognition = null;
+        let streamRef = null;
+
+        // ==========================================
+        // 1. GENERADOR DE AUDIO ROBÓTICO (Web Audio)
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'happy' || type === 'excited') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(900, now);
+                osc.frequency.exponentialRampToValueAtTime(1800, now + 0.12);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+                osc.start(now); osc.stop(now + 0.12);
+            } 
+            else if (type === 'sad') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.linearRampToValueAtTime(200, now + 0.4);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+            else if (type === 'angry') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(80, now + 0.25);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                osc.start(now); osc.stop(now + 0.25);
+            }
+            else if (type === 'purr') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(75, now);
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            }
+            else if (type === 'scan') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(1500, now + 1.2);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 1.2);
+                osc.start(now); osc.stop(now + 1.2);
+            }
+        }
+
+        // ==========================================
+        // 2. CONTROLADOR DE GESTOS Y EMOCIONES
+        // ==========================================
+        function setEmotion(emotion) {
+            eyeL.className = "eye left";
+            eyeR.className = "eye right";
+            body.className = "";
+
+            const validEmotions = {
+                idle: "state-idle",
+                happy: "state-happy",
+                sad: "state-sad",
+                angry: "state-angry",
+                surprised: "state-surprised",
+                thinking: "state-thinking",
+                sleepy: "state-sleepy",
+                excited: "state-excited",
+                scanning: "state-scanning"
+            };
+
+            const classToAdd = validEmotions[emotion] || "state-idle";
+            eyeL.classList.add(classToAdd);
+            eyeR.classList.add(classToAdd);
+            body.classList.add(`theme-${emotion}`);
+            
+            statusText.innerText = `STATUS: ${emotion.toUpperCase()}`;
+            playBeep(emotion);
+        }
+
+        function caricia() {
+            setEmotion('excited');
+            playBeep('purr');
+            setTimeout(() => setEmotion('happy'), 1500);
+        }
+
+        // ==========================================
+        // 3. CONEXIÓN DIRECTA CON GEMINI (GPT INTEL)
+        // ==========================================
+        async function askGemini(question) {
+            const apiKey = document.getElementById('api-key').value.trim();
+            if(!apiKey) {
+                logChat("SISTEMA", "Por favor ingresa una API Key válida.");
+                setEmotion('sad');
+                return;
+            }
+
+            setEmotion('thinking');
+            logChat("Tú", question);
+
+            try {
+                // System Prompt para obligar a Gemini a actuar como el robot y devolver JSON con emoción integrada
+                const systemPrompt = `Eres AIBI, un robot mascota tierno, sarcástico, interactivo y de bolsillo. 
+                Responde en español de forma súper corta (máximo 2 líneas de texto). 
+                Debes responder EXCLUSIVAMENTE con un objeto JSON válido, sin usar formato Markdown ni envolverlo en bloques de código de tipo \`\`\`json. 
+                El formato JSON que DEBES usar obligatoriamente es el siguiente:
+                {"emotion": "happy|sad|angry|surprised|thinking|sleepy|excited", "text": "tu respuesta simpática aquí"}
+                
+                Ejemplo de salida esperada:
+                {"emotion": "happy", "text": "¡Hola humano! Mi batería brilla de alegría al escucharte."}`;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [
+                            { role: 'user', parts: [{ text: `${systemPrompt}\n\nPregunta del usuario: ${question}` }] }
+                        ]
+                    })
+                });
+
+                if(!response.ok) throw new Error("Error en la llamada a la API");
+
+                const data = await response.json();
+                let rawText = data.candidates[0].content.parts[0].text;
+                
+                // Limpieza de cualquier residuo markdown que el LLM ponga por error
+                rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+                
+                const parsed = JSON.parse(rawText);
+                
+                // Aplicar la emoción y hablar la respuesta recibida
+                setEmotion(parsed.emotion || 'happy');
+                speakOut(parsed.text || "¡Bip bup! No sé qué decir.");
+                logChat("AIBI", parsed.text);
+
+            } catch (error) {
+                console.error(error);
+                setEmotion('sad');
+                speakOut("Error de conexión cerebral.");
+                logChat("SISTEMA", "Ocurrió un problema de red o la API Key no es válida.");
+            }
+        }
+
+        // ==========================================
+        // 4. SÍNTESIS DE VOZ Y SENSADO DE CARA
+        // ==========================================
+        function speakOut(text) {
+            const synth = window.speechSynthesis;
+            if(!synth) return;
+
+            // Cortamos cualquier audio que ya esté sonando
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'es-ES';
+            utterance.rate = 1.1; // Un poquito rápido para sonar robótico/tierno
+            utterance.pitch = 1.4; // Tono más agudo de mascota
+
+            utterance.onstart = () => {
+                robotScreen.classList.add('talking');
+            };
+            utterance.onend = () => {
+                robotScreen.classList.remove('talking');
+            };
+
+            synth.speak(utterance);
+        }
+
+        // ==========================================
+        // 5. RECONOCIMIENTO DE VOZ DEL USUARIO
+        // ==========================================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'es-ES';
+            recognition.interimResults = false;
+
+            recognition.onstart = () => {
+                btnMic.classList.add('active');
+                textInput.placeholder = "Escuchando voz...";
+            };
+
+            recognition.onresult = (event) => {
+                const voiceQuery = event.results[0][0].transcript;
+                textInput.value = voiceQuery;
+                askGemini(voiceQuery);
+            };
+
+            recognition.onend = () => {
+                btnMic.classList.remove('active');
+                textInput.placeholder = "Escríbele algo a AIBI...";
+            };
+        }
+
+        function toggleSpeech() {
+            if(!recognition) {
+                alert("Tu navegador no soporta entrada de voz directa.");
+                return;
+            }
+            recognition.start();
+        }
+
+        // ==========================================
+        // 6. ESCÁNER FACIAL HOLOGRÁFICO POR CÁMARA
+        // ==========================================
+        async function startCameraScan() {
+            setEmotion('scanning');
+            cameraBox.style.display = 'block';
+            playBeep('scan');
+
+            try {
+                streamRef = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('webcam').srcObject = streamRef;
+            } catch (err) {
+                logChat("SISTEMA", "Permiso de cámara denegado. No se puede escanear.");
+                cameraBox.style.display = 'none';
+                setEmotion('sad');
+                return;
+            }
+
+            // Simulación interactiva de análisis de espectro
+            let countdown = 3;
+            const interval = setInterval(() => {
+                statusText.innerText = `SCANNING PATTERNS [${countdown}]`;
+                countdown--;
+                if(countdown < 0) {
+                    clearInterval(interval);
+                    stopCameraAndConclude();
+                }
+            }, 1000);
+        }
+
+        function stopCameraAndConclude() {
+            if(streamRef) {
+                streamRef.getTracks().forEach(track => track.stop());
+            }
+            cameraBox.style.display = 'none';
+            
+            // Reacción aleatoria tras escanear el entorno del usuario
+            const scannerReactions = [
+                { emotion: "happy", text: "Escaneo completado. Detecto altos niveles de carisma en el ambiente." },
+                { emotion: "surprised", text: "¡Córcholis! Mi escáner detectó fluctuaciones cuánticas... ¿Es polvo o magia?" },
+                { emotion: "excited", text: "¡Súper escaneo listo! Veo a mi humano favorito justo frente a mí." },
+                { emotion: "sleepy", text: "Escaneo aburrido... El entorno está demasiado tranquilo, me dio sueño." }
+            ];
+
+            const pick = scannerReactions[Math.floor(Math.random() * scannerReactions.length)];
+            setEmotion(pick.emotion);
+            speakOut(pick.text);
+            logChat("AIBI", pick.text);
+        }
+
+        // ==========================================
+        // 7. INTERFAZ DE USUARIO Y SOPORTE DE CHAT
+        // ==========================================
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                const query = textInput.value.trim();
+                if (query) {
+                    askGemini(query);
+                    textInput.value = '';
+                }
+            }
+        }
+
+        function logChat(author, text) {
+            const line = document.createElement('div');
+            line.className = `chat-line ${author === 'Tú' ? 'user' : 'ai'}`;
+            line.innerHTML = `<strong>[${author.toUpperCase()}]:</strong> ${text}`;
+            chatBox.appendChild(line);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Despertar al robot con un simpático sonido al hacer click por primera vez
+        document.body.addEventListener('click', () => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }, { once: true });
+
+    </script>
+</body>
+</html>
