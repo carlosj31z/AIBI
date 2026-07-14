@@ -2,92 +2,71 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>AIBI - Premium Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIBI - AI Pocket Pet</title>
     <style>
-        :root { --bg: #090912; --metal: #1a1a2e; --neon: #00f3ff; }
-        body { background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: sans-serif; }
-        
-        /* La caja metálica de AIBI */
-        .chassis { width: 280px; height: 220px; background: var(--metal); border-radius: 30px; border: 4px solid #333; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; }
-        
-        .eyes-container { display: flex; gap: 40px; }
-        .eye { width: 50px; height: 60px; background: var(--neon); border-radius: 50%; transition: 0.5s; }
-        
-        /* Estados */
-        .happy .eye { border-radius: 50% 50% 10% 10%; height: 30px; }
-        .sad .eye { border-radius: 10px; height: 10px; }
-        .thinking .eye { opacity: 0.5; transform: scale(0.7); }
-        .petting .eye { background: #ff00ff; transform: scale(1.2); }
-
-        .log { margin-top: 20px; width: 80%; max-width: 300px; height: 80px; font-size: 12px; color: #888; text-align: center; overflow-y: auto; }
-        .input-area { margin-top: 20px; display: flex; gap: 10px; }
-        input { background: #111; border: 1px solid #444; color: white; padding: 10px; border-radius: 10px; }
+        :root { --theme-color: #00f3ff; --bg-dark: #080810; --panel-bg: #111122; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg-dark); color: #ffffff; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; transition: background 0.8s ease; }
+        body.theme-happy { --theme-color: #39ff14; }
+        body.theme-sad { --theme-color: #0066ff; }
+        body.theme-thinking { --theme-color: #bd00ff; }
+        .api-panel { background-color: var(--panel-bg); border: 1px solid #222244; border-radius: 15px; padding: 12px; margin-bottom: 15px; width: 90%; max-width: 380px; text-align: center; }
+        .api-panel input { background: #05050a; border: 1px solid #333366; color: #00f3ff; padding: 8px; border-radius: 8px; width: 90%; text-align: center; font-size: 11px; }
+        .robot-chassis { position: relative; background: linear-gradient(145deg, #1d1d2e, #0c0c14); border: 4px solid #2d2d44; border-radius: 40px; padding: 25px; width: 90%; max-width: 380px; display: flex; flex-direction: column; align-items: center; }
+        .screen { background-color: #020205; border: 3px solid #1c1c30; border-radius: 25px; width: 100%; height: 210px; display: flex; flex-direction: column; align-items: center; padding: 15px 0; }
+        .eye { width: 52px; height: 72px; background-color: var(--theme-color); border-radius: 50%; box-shadow: 0 0 30px var(--theme-color); }
+        .chat-container { background-color: rgba(0,0,0,0.4); border-radius: 15px; width: 100%; height: 110px; margin-top: 15px; padding: 10px; overflow-y: auto; font-size: 11px; border: 1px solid #1a1a2e; }
+        .input-group { display: flex; width: 100%; gap: 8px; margin-top: 15px; }
+        .input-group input { flex: 1; background: #05050a; border: 1px solid #2d2d44; color: white; padding: 10px; border-radius: 20px; }
+        .btn-action { background-color: var(--panel-bg); border: 1px solid #2d2d44; color: white; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <div class="chassis" id="aibi" ontouchstart="petAibi()" onclick="petAibi()">
-        <div class="eyes-container">
-            <div class="eye" id="l"></div>
-            <div class="eye" id="r"></div>
+    <div class="api-panel">
+        <strong>⚙️ CREDENCIAL DE INTELIGENCIA</strong><br>
+        <input type="password" id="api-key" placeholder="Pega tu API Key aquí...">
+    </div>
+    <div class="robot-chassis">
+        <div class="screen">
+            <div class="eye" id="eye-l"></div>
+        </div>
+        <div class="chat-container" id="chat-box"></div>
+        <div class="input-group">
+            <input type="text" id="text-input" placeholder="Escribe algo..." onkeypress="if(event.key==='Enter') sendPrompt()">
+            <button class="btn-action" onclick="sendPrompt()">➤</button>
         </div>
     </div>
-
-    <div class="log" id="transcript">AIBI está esperando...</div>
-
-    <div class="input-area">
-        <input type="text" id="text-input" placeholder="Escribe algo...">
-        <button onclick="sendText()">Enviar</button>
-        <button onclick="startVoice()">🎙️</button>
-    </div>
-
     <script>
-        const apiKey = "AQ.Ab8RN6IcrejmNXE9otvzXI-qbv8UWDO4v1CBrJHvUy41C29NYg";
-        const aibi = document.getElementById('aibi');
-        const transcript = document.getElementById('transcript');
-        
-        function setEmotion(e) { aibi.className = `chassis ${e}`; }
-
-        // Caricias
-        function petAibi() {
-            setEmotion('petting');
-            new SpeechSynthesisUtterance("¡Mmm, qué rico!").speak;
-            setTimeout(() => setEmotion('happy'), 1000);
-        }
-
-        // Gemini Logic
-        async function askGemini(text) {
-            setEmotion('thinking');
-            transcript.innerText = "Pensando...";
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey},
-                body: JSON.stringify({ contents: [{ parts: [{ text: `JSON: {"emotion": "happy|sad|thinking", "text": "respuesta"}. Usuario: ${text}` }] }] })
-            });
-            const data = await res.json();
-            const json = JSON.parse(data.candidates[0].content.parts[0].text.replace(/```json|```/g, ""));
+        async function sendPrompt() {
+            const question = document.getElementById('text-input').value.trim();
+            const apiKey = document.getElementById('api-key').value.trim();
+            const chatBox = document.getElementById('chat-box');
             
-            transcript.innerText = json.text;
-            setEmotion(json.emotion);
-            const msg = new SpeechSynthesisUtterance(json.text);
-            msg.lang = 'es-ES';
-            window.speechSynthesis.speak(msg);
-        }
+            if(!question || !apiKey) return;
 
-        function sendText() {
-            const val = document.getElementById('text-input').value;
-            askGemini(val);
-        }
+            // ACTUALIZACIÓN: Usamos gemini-3.5-flash
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`;
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts: [{ text: `Responde en JSON: {"emotion": "happy", "text": "Hola"}. Pregunta: ${question}` }] }]
+                    })
+                });
 
-        function startVoice() {
-            const rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            rec.lang = 'es-ES';
-            rec.onresult = (e) => {
-                const text = e.results[0][0].transcript;
-                transcript.innerText = "Tú: " + text;
-                askGemini(text);
-            };
-            rec.start();
+                const data = await response.json();
+                if(!response.ok) throw new Error(data.error?.message || "Error del servidor");
+
+                const rawText = data.candidates[0].content.parts[0].text;
+                const parsed = JSON.parse(rawText.replace(/```json|```/g, ""));
+                
+                chatBox.innerHTML += `<div><strong>AIBI:</strong> ${parsed.text}</div>`;
+                document.body.className = `theme-${parsed.emotion}`;
+            } catch (err) {
+                chatBox.innerHTML += `<div style="color:red">Error: ${err.message}</div>`;
+            }
         }
     </script>
 </body>
